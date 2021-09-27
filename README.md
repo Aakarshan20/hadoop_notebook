@@ -239,10 +239,10 @@ $ sudo chown atguigu:atguigu module/ software/
 # rpm -qa | grep -i java | xargs - n1 rpm -e --nodeps
 ```
 
-rpm -qa: 查詢所安裝的所有rpm軟體包
-grep -i: 忽略大小寫
-xargs -n1: 表示每次只傳遞一個參數
-rpm -e -nodeps: 強制卸載軟體
+- rpm -qa: 查詢所安裝的所有rpm軟體包
+- grep -i: 忽略大小寫
+- xargs -n1: 表示每次只傳遞一個參數
+- rpm -e -nodeps: 強制卸載軟體
 
 重啟虛擬機
 
