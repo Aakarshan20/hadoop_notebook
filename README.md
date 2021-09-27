@@ -175,6 +175,79 @@ vim /etc/hosts
 改完reboot
 
 ```
-sudo reboot
+# sudo reboot
 ```
+
+安裝紅帽體系操作系統的倉庫
+```
+# yum install -y epel-release
+```
+
+關閉防火牆,關閉防火牆開機自啟
+```
+# systemctl stop firewalld
+# systemctl disable firewalld.service
+
+```
+
+創造atguitu 用戶, 並修改atguigu用戶的密碼
+```
+# useradd atguigu
+# passwd atguigu
+```
+
+配置atguigu用戶root權限, 方便後期加sudo 執行 root 權限命令
+```
+vim /etc/sudoers
+```
+
+修改/etc/sudoer 文件 在%wheel這行下面加一行 如下所示
+```
+## Allow root to run any commands anywhere
+root ALL=(ALL)		ALL
+
+## Allows people in group wheel to run all commands
+%wheel ALL=(ALL)		ALL
+atguigu ALL=(ALL)		NOPASSWD:ALL
+```
+
+*注意: atguigu這行不要直接放到root下面, 因為所有用戶都屬於%wheel組, 你先配置了atguigu具有免密功能,
+但是程序執行到%wheel行時, 該功能又被覆蓋回需要密碼
+所以atguigu要放到%wheel這行下面*
+
+切換到atguigu
+```
+$ su atguigu
+```
+
+在opt下創建以下資料夾
+```
+$ cd /opt
+$ sudo mkdir module
+$ sudo mkdir software 
+```
+
+更改資料夾權限
+```
+$ sudo chown atguigu:atguigu module/ software/
+```
+
+卸載虛擬機自帶的jdk
+*如果虛擬機是最小安裝, 忽略這一步*
+
+```
+# rpm -qa | grep -i java | xargs - n1 rpm -e --nodeps
+```
+
+rpm -qa: 查詢所安裝的所有rpm軟體包
+grep -i: 忽略大小寫
+xargs -n1: 表示每次只傳遞一個參數
+rpm -e -nodeps: 強制卸載軟體
+
+重啟虛擬機
+
+```
+# reboot
+```
+
 
