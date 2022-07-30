@@ -79,7 +79,7 @@
 	+ MapReduce離線計算
 	+ Hive數據查詢
 	+ Oozie任務調度
-	+ 業務模型 數據可視畫 業務應用
+	+ 業務模型 數據可視化 業務應用
 - 文件日誌(半結構化數據)未來可以導入DB
 	+ Flume日誌收集
 	+ HDFS文件存儲
@@ -161,15 +161,15 @@ vim /etc/hosts
 
 添加以下內容
 ```
-192.168.33.9 hadoop100
-192.168.33.11 hadoop101
-192.168.33.12 hadoop102
-192.168.33.13 hadoop103
-192.168.33.14 hadoop104
-192.168.33.15 hadoop105
-192.168.33.16 hadoop106
-192.168.33.17 hadoop107
-192.168.33.18 hadoop108
+192.168.10.100 hadoop100
+192.168.10.101 hadoop101
+192.168.10.102 hadoop102
+192.168.10.103 hadoop103
+192.168.10.104 hadoop104
+192.168.10.105 hadoop105
+192.168.10.106 hadoop106
+192.168.10.107 hadoop107
+192.168.10.108 hadoop108
 ```
 
 改完reboot
@@ -189,6 +189,7 @@ vim /etc/hosts
 # systemctl disable firewalld.service
 
 ```
+*企業開發時，單個機器的防火牆是關閉的，公司整體對外會開啟一個非常安全的防火牆*
 
 創造atguitu 用戶, 並修改atguigu用戶的密碼
 ```
@@ -236,7 +237,7 @@ $ sudo chown atguigu:atguigu module/ software/
 *如果虛擬機是最小安裝, 忽略這一步*
 
 ```
-# rpm -qa | grep -i java | xargs - n1 rpm -e --nodeps
+# rpm -qa | grep -i java | xargs -n1 rpm -e --nodeps
 ```
 
 - rpm -qa: 查詢所安裝的所有rpm軟體包
@@ -250,4 +251,99 @@ $ sudo chown atguigu:atguigu module/ software/
 # reboot
 ```
 
+## 克隆虛擬機
+
+*克隆前先關機*
+
+```
+1. vm ware 中選定機器
+2. 右鍵 manager
+3. clone
+4. 當前狀態 ( the current state in the virtual machine )
+5. 創建完整克隆 ( create a full clone )
+6. Virtual machine name 填入: hadoop102
+7. Location : 在跟hadoop100同級的地方開一個資料夾hadoop102 路徑指到這邊
+8. 等一段時間...
+9. 參照1-8 創建hadoop103 & hasoop104 
+```
+
+### 依序修改 102-104 ip地址
+```
+1. 進入 hadoop102 (用 root 登入)
+2. vim /etc/sysconfig/network-scripts/ifcfg-ens33
+3. IPADDR 改為 192.168.10.102
+4. vim /etc/hostname
+5. 改為 hadoop102
+6. # reboot
+7. 仿照1-7 修改 hadoop103 & hadoop104
+8. reboot
+```
+
+## 安裝jdk 與 hadoop
+
+### 準備檔案
+```
+1. 自行下載hadoop-3.1.3.tar.gz & jdk-8u202-linux-x64.tar.gz
+2. 使用ftp 上傳到 hadoop102的 /opt/software
+3. 記得把檔案的所有者與群組改為atguigu:atguigu
+```
+
+### 安裝jdk
+```
+在 /opt/software 中 執行 tar -zxvf jdk-8u202-linux-x64.tar.gz -C /opt/module
+```
+### 創建自己的環境變量
+```
+1. # cd /etc/profile.d
+2. # sudo vim my_env.sh
+
+#JAVA_HOME
+export JAVA_HOME=/opt/module/jdk1.8.0_202
+export PATH=$PATH:$JAVA_HOME/bin
+
+3. 保存退出 
+4. 加載環境變量: #source /etc/profile
+5. 測試是否加載成功: # java 
+如果跳一堆訊息就代表安裝完畢!
+```
+
+### 安裝hadoop 
+```
+1. # cd /opt/software
+2. # tar -zxvf hadoop-3.1.4.tar.gz -C /opt/module
+3. # sudo vim my_env.sh
+
+(往下面增加這幾行 配置hadoop 環境變量)
+#HADOOP_HOME
+export HADOOP_HOME=/opt/module/hadoop-3.1.4
+
+export PATH=$PATH:$HADOOP_HOME/bin
+export PATH=$PATH:$HADOOP_HOME/sbin
+
+4. 保存退出 
+5. 加載環境變量: # source /etc/profile
+6. 測試是否加載成功: # hadoop 
+如果跳一堆訊息就代表安裝完畢!
+```
+
+### hadoop 目錄結構 ( 僅列出重點 )
+- bin/
+    + hdfs
+    + yarn
+    + mapred ( map reduce )
+- etc/ ( 大量的配置信息 )
+    + hdfs-site.xml ( hdfs相關配置)
+    + mapred-site.xml ( mapreduce 相關)
+    + yarn-site.xml ( yarn 相關)
+    + core-site.xml ( 核心文件 )
+- include/ ( 頭文件 )
+- sbin/
+  + hadoop-daemon.sh ( 單節點啟動 ) 
+  + start-dfs.sh ( 啟動dfs )
+  + start-yarn.sh ( 啟動資源調度器 )
+  + mr-jobhistory-daemon.sh ( 啟動歷史服務器 )
+- share/ ( 學習資料 )
+  + doc/
+  + hadoop/
+    + mapreduce/ ( 內含jar 範例檔 )
 
