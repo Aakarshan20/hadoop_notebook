@@ -486,39 +486,54 @@ wcoutput/: 輸出目錄(不能事先創建!!)
       [atguigu@hadoop102 bin]$ vim xsync
       ``` 
       在該文件中編寫如下代碼
-	  ```
-	  #!/bin/bash
-	  #1. 判斷參數個數
-	  if [ $# -lt 1 ]
-      then
-	      echo Not Enough Argument!
-	  exit;
-	  fi
-   		
-	  #2 遍歷集群所有機器
-   	
-	    for host in hadoop102 hadoop103 hadoop104
-	    do
-	      echo ======= $host ========
-	      #3. 遍歷所有目錄，挨個發送
-   	    
-	      for file in $@
-	      do
-	          #4. 判斷文件是否存在
-	          if [ -e $file ]
-	              then
-	                  #5. 獲取父目錄
-	                  pdir=$(cd -P $(dirname $file); pwd)
-                     
-	                  #6. 獲取當前目錄名稱
-	                  fname=$(basename $file)
-	                  ssh $host "mkdir -p $pdir"
-	                  rsync -av $pdir/$fname $host:$pdir
-	              else
-	                  echo $file does not exists!
-	          fi
-	      done
-	    done
       ```
+      #!/bin/bash
+      #1. 判斷參數個數
+      if [ $# -lt 1 ]
+      then
+          echo Not Enough Argument!
+      exit;
+      fi
    		
-
+      #2 遍歷集群所有機器
+   	
+        for host in hadoop102 hadoop103 hadoop104
+        do
+          echo ======= $host ========
+          #3. 遍歷所有目錄，挨個發送
+   	    
+          for file in $@
+          do
+              #4. 判斷文件是否存在
+              if [ -e $file ]
+                  then
+                      #5. 獲取父目錄 (cd -P: 忽略ln，進入真實目錄)
+                      pdir=$(cd -P $(dirname $file); pwd)
+                     
+                      #6. 獲取當前目錄名稱 (mkdir -p: 如果存在就不創建 )
+                      fname=$(basename $file)
+                      ssh $host "mkdir -p $pdir"
+                      rsync -av $pdir/$fname $host:$pdir
+                  else
+                      echo $file does not exists!
+              fi
+          done
+        done
+      ```
+      2. 增加執行權限x
+      ```
+      [atguigu@hadoop102 ~]$ chmod 777 /home/atguigu/bin/xsync
+      ```
+      3. 測試
+      ```
+      [atguigu@hadoop102 ~]$ xsync bin/
+      ```
+      4. 測試(sudo)
+      ```
+      [atguigu@hadoop102 ~]$ sudo ./bin/xsync /etc/profile.d/my_env.sh
+      ```
+   4. 載入 profile(分別進入 hadoop103 & hadoop104)
+   ```
+   [atguigu@hadoop103 ~]$ source /etc/profile
+   [atguigu@hadoop104 ~]$ source /etc/profile
+   ```
