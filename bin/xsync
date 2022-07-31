@@ -1,0 +1,32 @@
+#!/bin/bash
+#1. 判斷參數個數
+if [ $# -lt 1 ]
+	then
+	  echo Not Enough Argument!
+	exit;
+fi
+
+#2 遍歷集群所有機器
+
+for host in hadoop102 hadoop103 hadoop104
+do
+	echo ======= $host ========
+	#3. 遍歷所有目錄，挨個發送
+
+	for file in $@
+	do
+		#4. 判斷文件是否存在
+		if [ -e $file ]
+		then
+			#5. 獲取父目錄
+			pdir=$(cd -P $(dirname $file); pwd)
+			 
+			#6. 獲取當前目錄名稱
+			fname=$(basename $file)
+			ssh $host "mkdir -p $pdir"
+			rsync -av $pdir/$fname $host:$pdir
+		else
+			echo $file does not exists!
+		fi
+	done
+done
