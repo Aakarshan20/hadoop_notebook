@@ -537,3 +537,163 @@ wcoutput/: 輸出目錄(不能事先創建!!)
    [atguigu@hadoop103 ~]$ source /etc/profile
    [atguigu@hadoop104 ~]$ source /etc/profile
    ```
+   
+### SSH 無密登入配置
+
+1. 配置ssh
+   1. 基本語法
+   ```
+    ssh [另一台電腦的 IP 地址]
+   ```
+   2. ssh 連線時出現Host key verification failed
+   ```
+    [atguigu@hadoop102 ~]$ ssh hadoop103
+   ```
+    + 如果出現以下內容:
+   ```
+    Are you sure you want to continue connecting (yes/no)?
+   ```
+   輸入 yes，並enter
+2. 無密鑰配置
+
+   *需求: 希望hadoop102 可以無密鑰登入hadoop103 hadoop104*
+    1. 產生 ssh key
+    ```
+      [atguigu@hadoop102 .ssh]$ ssh-keygen -t rsa
+    ```
+     之後連按三次enter
+    ```
+     [atguigu@hadoop102 .ssh]$ ll
+      總計 12
+      -rw-------. 1 atguigu atguigu 1675  7月 31 23:35 id_rsa
+      -rw-r--r--. 1 atguigu atguigu  399  7月 31 23:35 id_rsa.pub
+      -rw-r--r--. 1 atguigu atguigu  558  7月 31 12:22 known_hosts
+    ```
+     可見產生了 ``` id_rsa ``` 與 ``` id_rsa.pub ```
+    ```
+    [atguigu@hadoop102 .ssh]$ cat id_rsa
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEowIBAAKCAQEAx0KK+4r3v61PxJV8pGlpvlxz9HtCOHX1n/FWSQSAzxdLEMrO
+    jsGiAgFO2L34uE/dC/JBtSklkRq7Rx5eAWjnLsQHvTEUIJ58x4S7ZeUBMTXGTGBm
+    /FBiSI7743DuW23dEqzIFwOy280TDJPhRT0Tej3GK/LqtATrtAyzZOMA7K/vI85u
+    hv0jNwLSru1m3eoRMWfsGgT6mYdF7EzHh/PhoyGhCOBNNYw5j4oX8ToQy79jCEVQ
+    fDDkLQW66WZZSyb3BQhb7YZhnIsewZ1Zu6j23rfRhUYDCApVCPidYnQ8zns8ca0w
+    DeSkAcY2OsEJo2TIqWiwwtzKi25qAvIx73gWJwIDAQABAoIBAQDG/gxgQxtCX+l+
+    kC9G3kMNKbVfXcz3J85hqZmbGBUvO7rqjS8VYAjT6cx9JdMC9jbxnEDEk9ABhmmr
+    D4ef7syZZom4BhBstvo0IrknfDjhlStw0QFoTzqn7ateK0TPJ/uUj9rPKRFw8u9o
+    KzLYe7M86/5Bm7mKiDN/vwNU6GLe+twaHYfCMLkyRYzkwIOfETbRgnotk5Q2imy8
+    Zcv1enJx9PxWjW0VlikXDexYoyZcWo++avvJwfNgdU6laln4d+9V3GUTIa3jrbMT
+    l8OQV1OkqR8+gyLM7PfcyQfLpzxlFREQvRuauG6fHq6xkHRUOoFRjUsSoYeXpEoY
+    NKZb3fQRAoGBAPKfSFle9+LQxjhfsIogElNV1zKrvkafTrScB3mhdCgFpZkgHg1o
+    0gojX7XOp6OsrwgGC+EJIew+MuHwKMrB5cX6YK5tr1JNPlmJbbEZxS6Pj2NSEYON
+    lNNdW96lua51tyufqanDnbBnqM+bKKQaM5lvjyjinh9aWq7tMQzNk/7fAoGBANI/
+    LuKmIqD/EcuYr2pMXle3IQvKNjCTcgCOQNYGfDB9erkrdidNY6pXuWxYe0A/T2RV
+    afq9p5Sprao7oh9TpBDW6l06CJUeapGXWSiUREMc55ZCLzVeNiNYzbXMAbd7bWI2
+    3qBoUyBlyVA7vVAwQSAYpqL0hfUyDi52eETNIvm5AoGAfLcT4ZzHn3fh7KiDfvzt
+    bpj5fbp6nKLXOk/aJ9OuecQtU4EG8a2oCj4UvMf1tFTXxDAXex3OqjluvmVNEqyJ
+    CDOj7wXC0XOTUUMrd5Xfngd9lXhiOFVW4y9iQhi+UceA2JPCCtna/QrL46vGQFSX
+    oY+O711OGp+/bZvPUt157dECgYBjAdoEZZP9GOC6bcZ9WkU7LUPkl275ZRXUaSjj
+    IN6uvwhh1rOnQmxitTjearRvxuCOMSLdLx6RhW4AsmBgPDUQsQRgromIH3Cz6v/T
+    ei7DJANy4Ov2R81ay+DjcZSFYRxbmdcw1q/+m7A3lkpKTs78XF9scZX7p3zCKIvu
+    amPEEQKBgGnrBSIXyjtxS6swRgD4X5+60xQ5XeKDb7uzgsmAMkjejvhiGFft9xch
+    /fV33EI6RFMUFT//OokjgIsFCfMT45hVg1/AAPCEiSK/Rm/Ukd185JZiQdX4CnK3
+    geTb1LJq1xdp4lDbUFcWFcRJNNeLnyFtwbFUovrSzUcyZonr9X7F
+    -----END RSA PRIVATE KEY-----
+   [atguigu@hadoop102 .ssh]$ cat id_rsa.pub
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDHQor7ive/rU/ElXykaWm+XHP0e0I4dfWf8VZJBIDPF0sQys6OwaICAU7Yvfi4T90L8kG1KSWRGrtHHl4BaOcuxAe9MRQgnnzHhLtl5QExNcZMYGb8UGJIjvvjcO5bbd0SrMgXA7LbzRMMk+FFPRN6PcYr8uq0BOu0DLNk4wDsr+8jzm6G/SM3AtKu7Wbd6hExZ+waBPqZh0XsTMeH8+GjIaEI4E01jDmPihfxOhDLv2MIRVB8MOQtBbrpZllLJvcFCFvthmGcix7BnVm7qPbet9GFRgMIClUI+J1idDzOezxxrTAN5KQBxjY6wQmjZMipaLDC3MqLbmoC8jHveBYn atguigu@hadoop102
+    ``` 
+   2. 把密碼送到hadoop103去
+   ```
+   [atguigu@hadoop102 .ssh]$ ssh-copy-id hadoop103
+   /usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/atguigu/.ssh/id_rsa.pub"
+   /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+   /usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+   ```
+   3. 輸入hadoop103的密碼
+   4. 可見以下訊息
+    ```
+    Number of key(s) added: 1
+
+    Now try logging into the machine, with:   "ssh 'hadoop103'"
+    and check to make sure that only the key(s) you wanted were added.
+    ```
+   5. 試著在hadoop102 連線hadoop103
+   ```
+    [atguigu@hadoop102 .ssh]$ ssh hadoop103
+    Last login: Sun Jul 31 22:46:23 2022 from 192.168.10.1
+    [atguigu@hadoop103 ~]$
+   ```
+   6. 在102上配置104 & 102 
+   ```
+    [atguigu@hadoop102 .ssh]$ ssh-copy-id hadoop104
+    /usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/atguigu/.ssh/id_rsa.pub"
+    /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+    /usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+    atguigu@hadoop104's password:
+    
+    Number of key(s) added: 1
+    
+    Now try logging into the machine, with:   "ssh 'hadoop104'"
+    and check to make sure that only the key(s) you wanted were added.
+    
+    [atguigu@hadoop102 .ssh]$ ssh hadoop104
+    Last login: Sun Jul 31 22:48:00 2022 from 192.168.10.1
+    [atguigu@hadoop104 ~]$ exit
+    logout
+    Connection to hadoop104 closed.
+    [atguigu@hadoop102 .ssh]$ ssh hadoop102
+    atguigu@hadoop102's password:
+    Last login: Sun Jul 31 22:45:36 2022 from 192.168.10.1
+    [atguigu@hadoop102 ~]$ exit
+    logout
+    Connection to hadoop102 closed.
+   ```
+   查看剛剛產生的key (authorized_keys: 允許那些主機可以免密登入我)
+   ```
+    [atguigu@hadoop102 .ssh]$ ll
+    總計 16
+    -rw-------. 1 atguigu atguigu  399  8月  1 00:22 authorized_keys
+    -rw-------. 1 atguigu atguigu 1675  7月 31 23:35 id_rsa
+    -rw-r--r--. 1 atguigu atguigu  399  7月 31 23:35 id_rsa.pub
+    -rw-r--r--. 1 atguigu atguigu  558  7月 31 12:22 known_hosts
+    [atguigu@hadoop102 .ssh]$ cat authorized_keys
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDHQor7ive/rU/ElXykaWm+XHP0e0I4dfWf8VZJBIDPF0sQys6OwaICAU7Yvfi4T90L8kG1KSWRGrtHHl4BaOcuxAe9MRQgnnzHhLtl5QExNcZMYGb8UGJIjvvjcO5bbd0SrMgXA7LbzRMMk+FFPRN6PcYr8uq0BOu0DLNk4wDsr+8jzm6G/SM3AtKu7Wbd6hExZ+waBPqZh0XsTMeH8+GjIaEI4E01jDmPihfxOhDLv2MIRVB8MOQtBbrpZllLJvcFCFvthmGcix7BnVm7qPbet9GFRgMIClUI+J1idDzOezxxrTAN5KQBxjY6wQmjZMipaLDC3MqLbmoC8jHveBYn atguigu@hadoop102
+    [atguigu@hadoop102 .ssh]$
+   ```
+   7. 換hadoop103
+   ```
+    [atguigu@hadoop103 .ssh]$ ll
+    總計 8
+    -rw-------. 1 atguigu atguigu 399  7月 31 23:46 authorized_keys
+    -rw-r--r--. 1 atguigu atguigu 186  7月 31 08:36 known_hosts
+    [atguigu@hadoop103 .ssh]$ cat authorized_keys
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDHQor7ive/rU/ElXykaWm+XHP0e0I4dfWf8VZJBIDPF0sQys6OwaICAU7Yvfi4T90L8kG1KSWRGrtHHl4BaOcuxAe9MRQgnnzHhLtl5QExNcZMYGb8UGJIjvvjcO5bbd0SrMgXA7LbzRMMk+FFPRN6PcYr8uq0BOu0DLNk4wDsr+8jzm6G/SM3AtKu7Wbd6hExZ+waBPqZh0XsTMeH8+GjIaEI4E01jDmPihfxOhDLv2MIRVB8MOQtBbrpZllLJvcFCFvthmGcix7BnVm7qPbet9GFRgMIClUI+J1idDzOezxxrTAN5KQBxjY6wQmjZMipaLDC3MqLbmoC8jHveBYn atguigu@hadoop102
+   ```
+   在hadoop103中配置免密登入hadoop102 & hadoop104 (參考1-6)
+   在hadoop104中配置免密登入hadoop102 & hadoop103 (參考1-6)
+    
+   8. 有空把hadoop102的 root 也配置一下對hadoop103 & hadoop104 的key
+   9. 同理 hadoop103 & hadoop104 也是 
+   10. 測試
+    ```
+    [atguigu@hadoop102 ~] touch a.txt
+    [atguigu@hadoop102 ~] xsync a.txt
+   ======= hadoop102 ========
+   sending incremental file list
+
+   sent 61 bytes  received 12 bytes  48.67 bytes/sec
+   total size is 0  speedup is 0.00
+   ======= hadoop103 ========
+   sending incremental file list
+   a.txt
+
+   sent 104 bytes  received 35 bytes  278.00 bytes/sec
+   total size is 0  speedup is 0.00
+   ======= hadoop104 ========
+   sending incremental file list
+   a.txt
+
+   sent 104 bytes  received 35 bytes  278.00 bytes/sec
+   total size is 0  speedup is 0.00
+    ```
+   成功!!
