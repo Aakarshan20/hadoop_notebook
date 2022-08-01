@@ -697,3 +697,219 @@ wcoutput/: 輸出目錄(不能事先創建!!)
    total size is 0  speedup is 0.00
     ```
    成功!!
+
+### 集群配置
+1. 集群部屬規劃
+    + 注意
+      + NameNode 和 SecondaryNameNode 不要安裝在同一台服務器
+      + ResoruceManager 也很耗內存，不要和 NameNode、SecondaryNameNode配置在同一台機器上。
+    + hadoop102
+      + HDFS
+        + NameNode
+        + DataNode
+      + YARN
+        + NodeManager
+    + hadoop103
+      + HDFS
+        + DataNode
+      + YARN
+        + ResourceManager
+        + NodeManager
+    + hadoop104
+      + HDFS
+        + SecondaryNameNode
+        + DataNode
+      + YARN
+        + NodeManager 
+2. 配置文件說明
+   + hadoop配置文件分兩類: 默認配置文件和自訂義配置文件，只有用戶想修改某一默認配置值時，才需要修改自訂義配置文件，更改相應屬性值。
+    1. 默認配置文件 ( 四大模塊分別對應 ):
+        
+      |  要獲取的默認文件   | 文件存放在 hadoop 的 jar 包中的位置  |
+      |  ----  | ----  |
+      | [core-default.xml]  | hadoop-common-3.1.4.jar/core-default.xml |
+      | [hdfs-default.xml]  | hadoop-hdfs-3.1.4.jar/hdfs-default.xml |
+      | [yarn-default.xml]  | hadoop-yarn-common-3.1.4.jar/yarn-default.xml |
+      | [mapred-default.xml]  | hadoop-mapreduce-client-core-3.1.4.jar/mapred-default.xml |
+        
+    2. 自定義配置文件:
+        + core-site.xml、 hdfs-site.xml、 yarn-site.xml、 mapred-site.xml 四個配置文件存放在 ```$HADOOP_HOME/etc/hadoop``` 這個路徑上，用戶可以根據項目需求重新進行修改配置。
+    3. 配置集群
+        1. 核心配置文件
+           + 配置 ```core-site.xml```
+           ```
+           [atguigu@hadoop102 ~]$ cd $HADOOP_HOME/etc/hadoop
+           [atguigu@hadoop102 hadoop]$ vim core-site.xml
+           ```
+           + 文件內容如下
+           ```
+           <?xml version="1.0" encoding="UTF-8"?>
+           <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+           <!--
+           Licensed under the Apache License, Version 2.0 (the "License");
+           you may not use this file except in compliance with the License.
+           You may obtain a copy of the License at
+            
+             http://www.apache.org/licenses/LICENSE-2.0
+            
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License. See accompanying LICENSE file.
+           -->
+            
+           <!-- Put site-specific property overrides in this file. -->
+            
+           <configuration>
+               <!-- 指定 NameNode 的地址 -->
+               <property>
+                   <name>fs.defaultFS</name>
+                   <value>hdfs://hadoop102:8020</value>
+               </property>
+               <!-- 指定 NameNode 的數據存儲目錄 -->
+               <property>
+                   <name>hadoop.tmp.dir</name>
+                   <value>/opt/module/hadoop-3.1.4/data</value>
+               </property>
+               <!-- 配置 NameNode 網頁登入使用的靜態用戶為 atguigu -->
+               <property>
+                   <name>hadoop.http.staticuser.user</name>
+                   <value>atguigu</value>
+               </property>
+           </configuration>
+           ```
+        2. HDFS 配置文件
+           + 配置 ```hdfs-site.xml```
+           ```
+           [atguigu@hadoop102 hadoop]$ vim hdfs-site.xml
+           ```
+           + 文件內容如下
+           ```
+            <configuration>
+                <!-- 指定 nn web端訪問地址 -->
+                <property>
+                    <name>dfs.namenode.http-address</name>
+                    <value>hadoop102:9870</value>
+                </property>
+                <!-- 2nn web端訪問地址  -->
+                <property>
+                    <name>dfs.namenode.secondary.http-address</name>
+                    <value>hadoop104:9868</value>
+               </property>
+            </configuration>
+           ```
+       3. YARN 配置文件
+           + 配置 ```yarn-site.xml```
+          ```
+          [atguigu@hadoop102 hadoop]$ vim yarn-site.xml
+          ```
+           + 文件內容如下
+          ```
+           <configuration>
+               <!-- 指定 MR 走 shuffle -->
+               <property>
+                   <name>yarn.nodemanager.aux-service</name>
+                   <value>mapreduce_shuffle</value>
+               </property>
+               <!-- 指定 ResourceManager 的地址 -->
+               <property>
+                   <name>yarn.resourcemanager.hostname</name>
+                   <value>hadoop103</value>
+               </property>
+               <!-- 環境變量的繼承 -->
+               <property>
+                   <name>yarn.nodemanager.env-whitelist</name>
+                   <value>JAVA_HOME,HADOOP_COMMON,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
+               </property>
+           </configuration>
+          ```  
+       4. MapReduce 配置文件
+           + 配置 ```mapred-site.xml```
+          ```
+          [atguigu@hadoop102 hadoop]$ vim mapred-site.xml
+          ```
+           + 文件內容如下
+          ```
+           <configuration>
+           <!-- 指定 MapReduce 程序運行在 Yarn 上 -->
+               <property>
+                   <name>mapreduce.framework.name</name>
+                   <value>yarn</value>
+               </property>
+          </configuration>
+          ``` 
+    4. 在集群上分發配置好的 hadoop 配置文件
+       ```
+       [atguigu@hadoop102 hadoop]$ xsync /opt/module/hadoop-3.1.4/etc/hadoop
+       ```
+    5. 去 hadoop103 和 hadoop104 上查看文件分發情況
+       ```
+       [atguigu@hadoop103 ~]$ cat /opt/module/hadoop-3.1.4/etc/hadoop/core-site.xml
+       [atguigu@hadoop104 ~]$ cat /opt/module/hadoop-3.1.4/etc/hadoop/core-site.xml
+       ```
+### 群起集群
+1. 配置 workers
+    ```
+    [atguigu@hadoop102 hadoop]$ vim /opt/module/hadoop-3.1.4/etc/hadoop/workers
+    ```
+   + 在該文件中增加如下內容 ( 默認的localhost刪了 )
+    ```
+    hadoop102
+    hadoop103
+    hadoop104
+    ```
+   *注意: 該文件中添加的內容結尾不允許有空格，文件中不允許有空行。*
+    ```
+    [atguigu@hadoop102 hadoop]$xsync /opt/module/hadoop-3.1.4/etc
+    ```
+2. 啟動集群
+    1. *如果是第一次啟動*，需要在 hadoop102 結點格式化 NameNode ( 注意: 格式化NameNode，會產生新的集群id，導致 NameNode 和 DataNode 的集群 id 不一致，集群找不到以往數據。如果集群在運行過程中報錯，需要重新格式化 NameNode 的話，一定要先停止 NameNode 和 DataNode進程，並且要刪除所有機器的 data 和 logs 目錄，然後再進行格式化。)
+       ```
+       [atguigu@hadoop102 hadoop-3.1.4]$ hdfs namenode -format
+       ```
+     + 如果成功，```/opt/module/hadoop-3.1.4/``` 會產生一個 data ，裡面有 data/dfs/name
+       ```
+       [atguigu@hadoop102 ~] cat /opt/module/hadoop-3.1.4/data/dfs/name/current/VERSION
+       #Tue Aug 02 01:13:57 CST 2022
+       namespaceID=1901990470
+       clusterID=CID-3363d696-c09f-4407-8bd2-075507f44675
+       cTime=1659374037667
+       storageType=NAME_NODE
+       blockpoolID=BP-1820893376-192.168.10.102-1659374037667
+       layoutVersion=-64
+       ```
+    2. 啟動 HDFS
+    ```
+    [atguigu@hadoop102 hadoop-3.1.4]$ sbin/start-dfs.sh
+    Starting namenodes on [hadoop102]
+    Starting datanodes
+    hadoop104: WARNING: /opt/module/hadoop-3.1.4/logs does not exist. Creating.
+    hadoop103: WARNING: /opt/module/hadoop-3.1.4/logs does not exist. Creating.
+    Starting secondary namenodes [hadoop104]
+    ```
+    查看NameNode有沒有起來
+    ```
+    [atguigu@hadoop102 hadoop-3.1.4]$ jps
+    62853 NameNode
+    62971 DataNode
+    63230 Jps
+    [atguigu@hadoop103 hadoop-3.1.4]$ jps
+    61408 DataNode
+    61499 Jps
+    [atguigu@hadoop104 hadoop]$ jps
+    61376 SecondaryNameNode
+    61269 DataNode
+    61449 Jps
+    ```
+    3. 在配置了 ResourceManager 的節點 (hadoop103) 啟動 YARN
+    ```
+    [atguigu@hadoop103 hadoop-3.1.4]$ sbin/start-yarn.sh
+    ```
+    4. Web 端查看 HDFS 的 NameNode
+       1. 瀏覽器輸入: http://hadoop102:9870
+       2. 查看 HDFS 上存儲的信息
+    5. Web 端查看 YARN 的 ResourceManager
+       1. 瀏覽器輸入: http://hadoop103:8088
+       2. 查看 YARN 上運行的 job 信息
+
