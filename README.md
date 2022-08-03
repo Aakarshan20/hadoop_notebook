@@ -387,7 +387,7 @@ yangge
 # hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.4.jar wordcount wcinput/ ./wcoutput
 
 share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.4.jar: 範例代碼
-wordcount: 自數統計
+wordcount: 字數統計
 wcinput/: 輸入目錄
 wcoutput/: 輸出目錄(不能事先創建!!)
 
