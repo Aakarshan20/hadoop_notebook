@@ -295,7 +295,7 @@ $ sudo chown atguigu:atguigu module/ software/
 ### 創建自己的環境變量
 ```
 1.	# cd /etc/profile.d
-2.	# sudo vim my_env.sh
+2.	# vim my_env.sh
 
 #JAVA_HOME
 export JAVA_HOME=/opt/module/jdk1.8.0_202
@@ -307,11 +307,12 @@ export PATH=$PATH:$JAVA_HOME/bin
 如果跳一堆訊息就代表安裝完畢!
 ```
 
-### 安裝hadoop 
+### 安裝hadoop
 ```
 1.	# cd /opt/software
 2.	# tar -zxvf hadoop-3.1.4.tar.gz -C /opt/module
-3.	# sudo vim my_env.sh
+3.  # cd /etc/profile.d
+4.	# vim my_env.sh
 
 (往下面增加這幾行 配置hadoop 環境變量)
 #HADOOP_HOME
