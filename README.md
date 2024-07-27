@@ -1568,3 +1568,123 @@ Starting nodemanagers
 點選 `history` 打開歷史服務器
 
 會跳到 `http://hadoop102:19888`
+
+### 配置日誌聚集
+
+0. 進入點
+
+- `http://hadoop102:19888/jobhistory/job/[jobID]`
+
+- 例如`http://hadoop102:19888/jobhistory/job/job_1722092974610_0001`
+- 點選 `logs`
+  發現錯誤訊息,
+
+```
+Aggregation is not enabled. Try the nodemanager at hadoop104:33318
+Or see application log at http://hadoop104:8042/node/application/application_1722092974610_0001
+```
+
+1. 進入 102 修改 yarn-site.xml
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ vim etc/hadoop/yarn-site.xml
+```
+
+2. 加入以下設置
+
+```
+    <!-- 開啟日誌聚集 -->
+    <property>
+        <name>yarn.log-aggregation-enable</name>
+        <value>true</value>
+    </property>
+    <!-- 設置日誌聚集服務器位置 -->
+    <property>
+        <name>yarn.log.server.url</name>
+        <value>http://hadoop102:19888/jobhistory/logs</value>
+    </property>
+    <!-- 設置日誌保留時間為7天 -->
+    <property>
+        <name>yarn.log-aggregation.retain-seconds</name>
+        <value>604800</value>
+    </property>
+```
+
+3. 分發配置
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ xsync etc/hadoop/yarn-site.xml
+======= hadoop102 ========
+sending incremental file list
+
+sent 70 bytes  received 12 bytes  164.00 bytes/sec
+total size is 1,706  speedup is 20.80
+======= hadoop103 ========
+sending incremental file list
+yarn-site.xml
+
+sent 1,127 bytes  received 47 bytes  2,348.00 bytes/sec
+total size is 1,706  speedup is 1.45
+======= hadoop104 ========
+sending incremental file list
+yarn-site.xml
+
+sent 1,127 bytes  received 47 bytes  2,348.00 bytes/sec
+total size is 1,706  speedup is 1.45
+```
+
+4. 關閉 NodeManager, ResourceManager 和 HistoryServer
+
+先在 hadooop102 關 historyserver
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ mapred --daemon stop historyserver
+```
+
+到 hadoop103 關閉 yarn
+
+```
+[atguigu@hadoop103 hadoop-3.1.4]$ sbin/stop-yarn.sh
+Stopping nodemanagers
+hadoop104: WARNING: nodemanager did not stop gracefully after 5 seconds: Trying to kill with kill -9
+hadoop102: WARNING: nodemanager did not stop gracefully after 5 seconds: Trying to kill with kill -9
+hadoop103: WARNING: nodemanager did not stop gracefully after 5 seconds: Trying to kill with kill -9
+Stopping resourcemanager
+```
+
+到 hadoop103 開啟 yarn
+
+```
+[atguigu@hadoop103 hadoop-3.1.4]$ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+[atguigu@hadoop103 hadoop-3.1.4]$ jps
+22352 DataNode
+24578 Jps
+24232 NodeManager
+24093 ResourceManager
+```
+
+到 hadoop102 開啟 historyserver
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ mapred --daemon start historyserver
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+31800 Jps
+31481 JobHistoryServer
+31674 NodeManager
+29788 DataNode
+29630 NameNode
+```
+
+```
+
+```
+
+這時再執行一個任務, 看看配置有沒有生效 ( 之前的任務 log 沒有聚合無法查看 )
+
+回到 hadoop102 運行
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.4.jar wordcount /input /output2
+```

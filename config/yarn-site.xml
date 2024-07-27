@@ -27,6 +27,21 @@ limitations under the License. See accompanying LICENSE file.
         <name>yarn.resourcemanager.hostname</name>
         <value>hadoop103</value>
     </property>
+    <!-- 開啟日誌聚集 -->
+    <property>
+        <name>yarn.log-aggregation-enable</name>
+        <value>true</value>
+    </property>
+    <!-- 設置日誌聚集服務器位置 -->
+    <property>
+        <name>yarn.log.server.url</name>
+        <value>http://hadoop102:19888/jobhistory/logs</value>
+    </property>
+    <!-- 設置日誌保留時間為7天 -->
+    <property>
+        <name>yarn.log-aggregation.retain-seconds</name>
+        <value>604800</value>
+    </property>
     <!-- 環境變量的繼承 -->
     <property>
         <name>yarn.nodemanager.env-whitelist</name>
