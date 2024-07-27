@@ -345,8 +345,8 @@ export PATH=$PATH:$HADOOP_HOME/sbin
 ### hadoop 目錄結構 ( 僅列出重點 )
 
 - bin/
-  - hdfs
-  - yarn
+  - hdfs ( 數據存儲 )
+  - yarn ( 資源調度 )
   - mapred ( map reduce )
 - etc/ ( 大量的配置信息 )
   - hdfs-site.xml ( hdfs 相關配置)
@@ -409,6 +409,11 @@ wcoutput/: 輸出目錄(不能事先創建!!)
 
 察看結果
 # cd /opt/module/hadoop-3.1.4/
+# wcoutput會有兩個數據
+  - part-r-00000
+    - 結果寫在這裡
+  - _SUCCESS
+    - 只是標記 裡面沒有東西
 # cat wcoutput/part-r-00000
 ```
 
@@ -551,7 +556,7 @@ wcoutput/: 輸出目錄(不能事先創建!!)
       [atguigu@hadoop102 ~]$ chmod 777 /home/atguigu/bin/xsync
       ```
 
-      3. 測試
+      3. 測試 ( 盡量用 atguigu 操作 )
 
       ```
       [atguigu@hadoop102 ~]$ xsync bin/
@@ -592,7 +597,22 @@ wcoutput/: 輸出目錄(不能事先創建!!)
 
    1. 產生 ssh key
 
+   _機器上有執行過 ssh 命令, 家目錄才會有 .ssh 目錄_
+
+   _看看誰來過 ( 非必要 )_
+
    ```
+   [atguigu@hadoop103 ~]$ cd .ssh
+   [atguigu@hadoop103 .ssh]$ cat known_hosts
+    hadoop102,192.168.10.102 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBH4POQy1mBfqwxlzDUnH3jZcwORaPWOxWtQGHjGGfXRrX4AXHC1xYOZ1IXcJ0MKb8w7NjB0lPi5/VDt05b59Poc=
+    hadoop104,192.168.10.104 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBH4POQy1mBfqwxlzDUnH3jZcwORaPWOxWtQGHjGGfXRrX4AXHC1xYOZ1IXcJ0MKb8w7NjB0lPi5/VDt05b59Poc=
+    hadoop103,192.168.10.103 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBH4POQy1mBfqwxlzDUnH3jZcwORaPWOxWtQGHjGGfXRrX4AXHC1xYOZ1IXcJ0MKb8w7NjB0lPi5/VDt05b59Poc=
+   ```
+
+   建立密鑰
+
+   ```
+     [atguigu@hadoop102 ~]$ cd ~/.ssh
      [atguigu@hadoop102 .ssh]$ ssh-keygen -t rsa
    ```
 
