@@ -775,7 +775,7 @@ wcoutput/: 輸出目錄(不能事先創建!!)
 
 1. 集群部屬規劃
    - 注意
-     - NameNode 和 SecondaryNameNode 不要安裝在同一台服務器
+     - NameNode 和 SecondaryNameNode 不要安裝在同一台服務器 因為都很耗內存
      - ResoruceManager 也很耗內存，不要和 NameNode、SecondaryNameNode 配置在同一台機器上。
    - hadoop102
      - HDFS
@@ -800,12 +800,12 @@ wcoutput/: 輸出目錄(不能事先創建!!)
    - hadoop 配置文件分兩類: 默認配置文件和自訂義配置文件，只有用戶想修改某一默認配置值時，才需要修改自訂義配置文件，更改相應屬性值。
 
    1. 默認配置文件 ( 四大模塊分別對應 ):
-      | 要獲取的默認文件 | 文件存放在 hadoop 的 jar 包中的位置 |
-      | -------------------- | --------------------------------------------------------- |
-      | [core-default.xml] | hadoop-common-3.1.4.jar/core-default.xml |
-      | [hdfs-default.xml] | hadoop-hdfs-3.1.4.jar/hdfs-default.xml |
-      | [yarn-default.xml] | hadoop-yarn-common-3.1.4.jar/yarn-default.xml |
-      | [mapred-default.xml] | hadoop-mapreduce-client-core-3.1.4.jar/mapred-default.xml |
+      | 要獲取的默認文件 | 文件存放在 hadoop 的 jar 包中的位置 | 模塊名稱 |
+      | -------------------- | --------------------------------------------------------- | ---- |
+      | [core-default.xml] | hadoop-common-3.1.4.jar/core-default.xml | common |
+      | [hdfs-default.xml] | hadoop-hdfs-3.1.4.jar/hdfs-default.xml | hdfs |
+      | [yarn-default.xml] | hadoop-yarn-common-3.1.4.jar/yarn-default.xml | yarn |
+      | [mapred-default.xml] | hadoop-mapreduce-client-core-3.1.4.jar/mapred-default.xml | mapreduce |
    2. 自定義配置文件:
       - core-site.xml、 hdfs-site.xml、 yarn-site.xml、 mapred-site.xml 四個配置文件存放在 `$HADOOP_HOME/etc/hadoop` 這個路徑上，用戶可以根據項目需求重新進行修改配置。
    3. 配置集群
@@ -897,7 +897,7 @@ wcoutput/: 輸出目錄(不能事先創建!!)
                   <name>yarn.resourcemanager.hostname</name>
                   <value>hadoop103</value>
               </property>
-              <!-- 環境變量的繼承 -->
+              <!-- 環境變量的繼承 , 3.2 版以後不用加這個-->
               <property>
                   <name>yarn.nodemanager.env-whitelist</name>
                   <value>JAVA_HOME,HADOOP_COMMON,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
@@ -952,6 +952,7 @@ wcoutput/: 輸出目錄(不能事先創建!!)
       [atguigu@hadoop102 hadoop-3.1.4]$ hdfs namenode -format
       ```
    - 如果成功，`/opt/module/hadoop-3.1.4/` 會產生一個 data ，裡面有 data/dfs/name
+   - 查看一下 VERSION
      ```
      [atguigu@hadoop102 ~] cat /opt/module/hadoop-3.1.4/data/dfs/name/current/VERSION
      #Tue Aug 02 01:13:57 CST 2022
@@ -991,7 +992,31 @@ wcoutput/: 輸出目錄(不能事先創建!!)
    ```
    4. Web 端查看 HDFS 的 NameNode
       1. 瀏覽器輸入: http://hadoop102:9870
-      2. 查看 HDFS 上存儲的信息
+      2. 點選導航列的 Utilities
+      3. 展開下拉選項
+      4. 點選 Browse the file system
+      5. 查看 HDFS 上存儲的信息
    5. Web 端查看 YARN 的 ResourceManager
       1. 瀏覽器輸入: http://hadoop103:8088
       2. 查看 YARN 上運行的 job 信息
+
+## 錯誤排除
+
+如果啟動途中 發現這種訊息
+
+```
+[atguigu@hadoop103 hadoop-3.1.4]$ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+hadoop103: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
+```
+
+代表那台機器 ( 如: hadoop103 ) 沒有配置金鑰登入,
+使用以下指令加上金鑰登入即可
+
+```
+[atguigu@hadoop102 .ssh]$ ssh-copy-id hadoop103
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/atguigu/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+```
