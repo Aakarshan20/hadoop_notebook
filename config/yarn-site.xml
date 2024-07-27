@@ -19,7 +19,7 @@ limitations under the License. See accompanying LICENSE file.
 <configuration>
     <!-- 指定 MR 走 shuffle -->
     <property>
-        <name>yarn.nodemanager.aux-service</name>
+        <name>yarn.nodemanager.aux-services</name>
         <value>mapreduce_shuffle</value>
     </property>
     <!-- 指定 ResourceManager 的地址 -->

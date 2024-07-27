@@ -889,7 +889,7 @@ wcoutput/: 輸出目錄(不能事先創建!!)
           <configuration>
               <!-- 指定 MR 走 shuffle -->
               <property>
-                  <name>yarn.nodemanager.aux-service</name>
+                  <name>yarn.nodemanager.aux-services</name>
                   <value>mapreduce_shuffle</value>
               </property>
               <!-- 指定 ResourceManager 的地址 -->
@@ -1019,4 +1019,267 @@ hadoop103: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 /usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/atguigu/.ssh/id_rsa.pub"
 /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
 /usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+```
+
+### 測試創建小文件
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop fs -mkdir /wcinput
+```
+
+1. 查看 `http://hadoop102:9870/explorer.html#/`
+
+2. 發現多了一個 wcinput 的文件
+
+- 把 hadoop102 的 word.txt 上傳到 hdfs
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop fs -put wcinput/word.txt /wcinput
+```
+
+1. 查看 `http://hadoop102:9870/explorer.html#/`
+
+2. 點擊 wcinput
+
+3. 發現裡面出現 word.txt
+
+4. 點擊 word.txt
+
+5. 點選 Tail the file
+
+6. 可以看到以下內容
+
+```
+ss ss
+cls cls
+banzhang
+yangge
+```
+
+7. 想要下載可以點 Download
+
+### 測試創建大文件
+
+把 jdk 丟上去
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop fs -put /opt/software/jdk-8u202-linux-x64.tar.gz /
+```
+
+1. 查看 `http://hadoop102:9870/explorer.html#/`
+2. 輸入框打入 `/ `
+3. 發現多了一個 `jdk-8u202-linux-x64.tar.gz` 的文件
+
+### 東西存在哪?
+
+在這
+
+`/opt/module/hadoop-3.1.4/data`
+
+這是當初配置集群文件時配置的
+
+```
+[atguigu@hadoop102 hadoop]$ vim core-site.xml
+```
+
+這段
+
+```
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/opt/module/hadoop-3.1.4/data</value>
+    </property>
+```
+
+進去看文件怎麼存的
+
+```
+[atguigu@hadoop102 subdir0]$ pwd
+/opt/module/hadoop-3.1.4/data/dfs/data/current/BP-1820893376-192.168.10.102-1659374037667/current/finalized/subdir0/subdir0
+[atguigu@hadoop102 subdir0]$ ll
+總計 58884
+-rw-rw-r--. 1 atguigu atguigu 59825109  7月 27 17:30 blk_1073741827
+-rw-rw-r--. 1 atguigu atguigu   467391  7月 27 17:30 blk_1073741827_1003.meta
+```
+
+_BP-1820893376-192.168.10.102-1659374037667_ 這段每台機器都不同, 請自行進入對應的 forder
+
+```
+進入 hadoop103 發現有一個132M的檔案
+[atguigu@hadoop103 subdir0]$ cd /opt/module/hadoop-3.1.4/data/dfs/data/current/BP-1820893376-192.168.10.102-1659374037667/current/finalized/subdir0/subdir0
+[atguigu@hadoop103 subdir0]$ ll
+總計 132108
+-rw-rw-r--. 1 atguigu atguigu        30  7月 27 17:25 blk_1073741825
+-rw-rw-r--. 1 atguigu atguigu        11  7月 27 17:25 blk_1073741825_1001.meta
+-rw-rw-r--. 1 atguigu atguigu 134217728  7月 27 17:30 blk_1073741826
+-rw-rw-r--. 1 atguigu atguigu   1048583  7月 27 17:30 blk_1073741826_1002.meta
+```
+
+把他放入 tar.gz
+
+```
+[atguigu@hadoop103 subdir0]$ cat blk_1073741826>>tmp.tar.gz
+[atguigu@hadoop103 subdir0]$ ll
+總計 263180
+-rw-rw-r--. 1 atguigu atguigu        30  7月 27 17:25 blk_1073741825
+-rw-rw-r--. 1 atguigu atguigu        11  7月 27 17:25 blk_1073741825_1001.meta
+-rw-rw-r--. 1 atguigu atguigu 134217728  7月 27 17:30 blk_1073741826
+-rw-rw-r--. 1 atguigu atguigu   1048583  7月 27 17:30 blk_1073741826_1002.meta
+-rw-rw-r--. 1 atguigu atguigu 134217728  7月 27 18:36 tmp.tar.gz
+```
+
+把他解壓
+
+```
+[atguigu@hadoop103 subdir0]$ tar -zxvf tmp.tar.gz
+```
+
+解出來就是 jdk 了
+
+```
+[atguigu@hadoop103 subdir0]$ ll
+總計 263180
+-rw-rw-r--. 1 atguigu atguigu        30  7月 27 17:25 blk_1073741825
+-rw-rw-r--. 1 atguigu atguigu        11  7月 27 17:25 blk_1073741825_1001.meta
+-rw-rw-r--. 1 atguigu atguigu 134217728  7月 27 17:30 blk_1073741826
+-rw-rw-r--. 1 atguigu atguigu   1048583  7月 27 17:30 blk_1073741826_1002.meta
+drwxr-xr-x. 7 atguigu atguigu       226 12月 16  2018 jdk1.8.0_202
+-rw-rw-r--. 1 atguigu atguigu 134217728  7月 27 18:36 tmp.tar.gz
+```
+
+### 執行計算任務
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.4.jar wordcount /wcinput /wcoutput
+2024-07-27 20:03:35,070 INFO client.RMProxy: Connecting to ResourceManager at hadoop103/192.168.10.103:8032
+2024-07-27 20:03:35,781 INFO mapreduce.JobResourceUploader: Disabling Erasure Coding for path: /tmp/hadoop-yarn/staging/atguigu/.staging/job_1722081559445_0001
+2024-07-27 20:03:36,353 INFO input.FileInputFormat: Total input files to process : 1
+2024-07-27 20:03:36,448 INFO mapreduce.JobSubmitter: number of splits:1
+2024-07-27 20:03:36,670 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1722081559445_0001
+2024-07-27 20:03:36,671 INFO mapreduce.JobSubmitter: Executing with tokens: []
+2024-07-27 20:03:36,855 INFO conf.Configuration: resource-types.xml not found
+2024-07-27 20:03:36,855 INFO resource.ResourceUtils: Unable to find 'resource-types.xml'.
+2024-07-27 20:03:37,309 INFO impl.YarnClientImpl: Submitted application application_1722081559445_0001
+2024-07-27 20:03:37,364 INFO mapreduce.Job: The url to track the job: http://hadoop103:8088/proxy/application_1722081559445_0001/
+2024-07-27 20:03:37,365 INFO mapreduce.Job: Running job: job_1722081559445_0001
+2024-07-27 20:03:46,604 INFO mapreduce.Job: Job job_1722081559445_0001 running in uber mode : false
+2024-07-27 20:03:46,605 INFO mapreduce.Job:  map 0% reduce 0%
+2024-07-27 20:03:52,694 INFO mapreduce.Job:  map 100% reduce 0%
+2024-07-27 20:03:57,749 INFO mapreduce.Job:  map 100% reduce 100%
+2024-07-27 20:03:57,773 INFO mapreduce.Job: Job job_1722081559445_0001 completed successfully
+2024-07-27 20:03:57,916 INFO mapreduce.Job: Counters: 53
+        File System Counters
+                FILE: Number of bytes read=53
+                FILE: Number of bytes written=442411
+                FILE: Number of read operations=0
+                FILE: Number of large read operations=0
+                FILE: Number of write operations=0
+                HDFS: Number of bytes read=133
+                HDFS: Number of bytes written=31
+                HDFS: Number of read operations=8
+                HDFS: Number of large read operations=0
+                HDFS: Number of write operations=2
+        Job Counters
+                Launched map tasks=1
+                Launched reduce tasks=1
+                Data-local map tasks=1
+                Total time spent by all maps in occupied slots (ms)=3540
+                Total time spent by all reduces in occupied slots (ms)=3217
+                Total time spent by all map tasks (ms)=3540
+                Total time spent by all reduce tasks (ms)=3217
+                Total vcore-milliseconds taken by all map tasks=3540
+                Total vcore-milliseconds taken by all reduce tasks=3217
+                Total megabyte-milliseconds taken by all map tasks=3624960
+                Total megabyte-milliseconds taken by all reduce tasks=3294208
+        Map-Reduce Framework
+                Map input records=4
+                Map output records=6
+                Map output bytes=54
+                Map output materialized bytes=53
+                Input split bytes=103
+                Combine input records=6
+                Combine output records=4
+                Reduce input groups=4
+                Reduce shuffle bytes=53
+                Reduce input records=4
+                Reduce output records=4
+                Spilled Records=8
+                Shuffled Maps =1
+                Failed Shuffles=0
+                Merged Map outputs=1
+                GC time elapsed (ms)=84
+                CPU time spent (ms)=1020
+                Physical memory (bytes) snapshot=342560768
+                Virtual memory (bytes) snapshot=5045940224
+                Total committed heap usage (bytes)=230821888
+                Peak Map Physical memory (bytes)=222322688
+                Peak Map Virtual memory (bytes)=2519580672
+                Peak Reduce Physical memory (bytes)=120238080
+                Peak Reduce Virtual memory (bytes)=2526359552
+        Shuffle Errors
+                BAD_ID=0
+                CONNECTION=0
+                IO_ERROR=0
+                WRONG_LENGTH=0
+                WRONG_MAP=0
+                WRONG_REDUCE=0
+        File Input Format Counters
+                Bytes Read=30
+        File Output Format Counters
+                Bytes Written=31
+```
+
+成功後訪問 `http://hadoop102:9870/explorer.html#/wcoutput`
+
+點擊 `part-r-00000`
+
+點擊 `Tail the file (last 32K)`
+
+可以看到計算結果
+
+```
+banzhang	1
+cls	2
+ss	2
+yangge	1
+```
+
+如果出現
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.4.jar wordcount /wcinput /wcoutput
+2024-07-27 19:31:33,349 INFO client.RMProxy: Connecting to ResourceManager at hadoop103/192.168.10.103:8032
+org.apache.hadoop.mapred.FileAlreadyExistsException: Output directory hdfs://hadoop102:8020/wcoutput already exists
+        at org.apache.hadoop.mapreduce.lib.output.FileOutputFormat.checkOutputSpecs(FileOutputFormat.java:164)
+        at org.apache.hadoop.mapreduce.JobSubmitter.checkSpecs(JobSubmitter.java:277)
+        at org.apache.hadoop.mapreduce.JobSubmitter.submitJobInternal(JobSubmitter.java:143)
+        at org.apache.hadoop.mapreduce.Job$11.run(Job.java:1570)
+        at org.apache.hadoop.mapreduce.Job$11.run(Job.java:1567)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at javax.security.auth.Subject.doAs(Subject.java:422)
+        at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1729)
+        at org.apache.hadoop.mapreduce.Job.submit(Job.java:1567)
+        at org.apache.hadoop.mapreduce.Job.waitForCompletion(Job.java:1588)
+        at org.apache.hadoop.examples.WordCount.main(WordCount.java:87)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at org.apache.hadoop.util.ProgramDriver$ProgramDescription.invoke(ProgramDriver.java:71)
+        at org.apache.hadoop.util.ProgramDriver.run(ProgramDriver.java:144)
+        at org.apache.hadoop.examples.ExampleDriver.main(ExampleDriver.java:74)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at org.apache.hadoop.util.RunJar.run(RunJar.java:318)
+        at org.apache.hadoop.util.RunJar.main(RunJar.java:232)
+```
+
+代表`wcoutput`資料夾已經存在了, 不要用 `rm -rf wcoutput`來刪, 會刪不乾淨, 執行以下指令刪除
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop fs -rm -r /wcoutput
+Deleted /wcoutput
+[atguigu@hadoop102 hadoop-3.1.4]$
 ```
