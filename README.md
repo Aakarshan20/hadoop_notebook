@@ -1462,3 +1462,109 @@ Starting nodemanagers
 ```
 
 5. 訪問 http://hadoop102:9870/explorer.html#/
+
+### 配置歷史服務器
+
+1. 編輯檔案
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ vim etc/hadoop/mapred-site.xml
+```
+
+2. 添加以下設定
+
+```
+...
+    <!-- 設置歷史服務器地址 -->
+    <property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>hadoop102:10020</value>
+    </property>
+    <!-- 歷史服務器 web 端地址 -->
+    <property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>hadoop102:19888</value>
+    </property>
+...
+```
+
+3. 分發配置
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ cd etc/hadoop/
+[atguigu@hadoop102 hadoop]$ xsync mapred-site.xml
+======= hadoop102 ========
+sending incremental file list
+
+sent 72 bytes  received 12 bytes  168.00 bytes/sec
+total size is 1,248  speedup is 14.86
+======= hadoop103 ========
+sending incremental file list
+mapred-site.xml
+
+sent 671 bytes  received 47 bytes  1,436.00 bytes/sec
+total size is 1,248  speedup is 1.74
+======= hadoop104 ========
+sending incremental file list
+mapred-site.xml
+
+sent 671 bytes  received 47 bytes  478.67 bytes/sec
+total size is 1,248  speedup is 1.74
+```
+
+4. 到 103 關閉 yarn 再重啟
+
+```
+[atguigu@hadoop103 hadoop-3.1.4]$ sbin/stop-yarn.sh
+Stopping nodemanagers
+Stopping resourcemanager
+[atguigu@hadoop103 hadoop-3.1.4]$ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+[atguigu@hadoop103 hadoop-3.1.4]$
+```
+
+5. 在 102 上啟動歷史服務器
+
+```
+[atguigu@hadoop102 hadoop]$ mapred --daemon start historyserver
+[atguigu@hadoop102 hadoop]$ jps
+21457 NodeManager
+19234 NameNode
+21642 JobHistoryServer
+19387 DataNode
+21679 Jps
+[atguigu@hadoop102 hadoop]$
+```
+
+6. 測試歷史服務器
+
+因為之前 /wcinput 被刪了, 所以這裡重新建立一個 /input
+
+```
+[atguigu@hadoop102 hadoop]$ hadoop fs -mkdir /input
+```
+
+先回到 hadoop-3.1.4
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ cd /opt/module/hadoop-3.1.4
+```
+
+把 wcinput/word.txt 放入 /input
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop fs -put wcinput/word.txt /input
+```
+
+運行任務
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.4.jar wordcount /input /output
+```
+
+訪問 `http://hadoop103:8088/cluster`
+
+點選 `history` 打開歷史服務器
+
+會跳到 `http://hadoop102:19888`

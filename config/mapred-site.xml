@@ -22,4 +22,14 @@ limitations under the License. See accompanying LICENSE file.
         <name>mapreduce.framework.name</name>
         <value>yarn</value>
     </property>
+    <!-- 設置歷史服務器地址 -->
+    <property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>hadoop102:10020</value>
+    </property>
+    <!-- 歷史服務器 web 端地址 -->
+    <property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>hadoop102:19888</value>
+    </property>
 </configuration>
