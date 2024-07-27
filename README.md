@@ -1003,6 +1003,7 @@ wcoutput/: 輸出目錄(不能事先創建!!)
 ## 錯誤排除
 
 如果啟動途中 發現這種訊息
+AJM6892
 
 ```
 [atguigu@hadoop103 hadoop-3.1.4]$ sbin/start-yarn.sh
@@ -1283,3 +1284,181 @@ org.apache.hadoop.mapred.FileAlreadyExistsException: Output directory hdfs://had
 Deleted /wcoutput
 [atguigu@hadoop102 hadoop-3.1.4]$
 ```
+
+### 集群崩潰的處理方法
+
+- 模擬集群崩潰
+
+砍了 DataNode
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+16386 NodeManager
+17396 Jps
+15273 NameNode
+15403 DataNode
+[atguigu@hadoop102 hadoop-3.1.4]$ kill -9 14503
+-bash: kill: (14503) - 沒有此一程序
+[atguigu@hadoop102 hadoop-3.1.4]$ kill -9 15403
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+17409 Jps
+16386 NodeManager
+15273 NameNode
+```
+
+data 也砍
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ rm -rf data
+[atguigu@hadoop102 hadoop-3.1.4]$ ll
+總計 180
+drwxr-xr-x. 2 atguigu atguigu    183  7月 21  2020 bin
+drwxr-xr-x. 3 atguigu atguigu     20  7月 21  2020 etc
+drwxr-xr-x. 2 atguigu atguigu    106  7月 21  2020 include
+drwxr-xr-x. 3 atguigu atguigu     20  7月 21  2020 lib
+drwxr-xr-x. 4 atguigu atguigu    288  7月 21  2020 libexec
+-rw-rw-r--. 1 atguigu atguigu 147145  7月 21  2020 LICENSE.txt
+drwxrwxr-x. 3 atguigu atguigu   4096  7月 27 19:59 logs
+-rw-rw-r--. 1 atguigu atguigu  21867  7月 21  2020 NOTICE.txt
+-rw-rw-r--. 1 atguigu atguigu   1366  7月 21  2020 README.txt
+drwxr-xr-x. 3 atguigu atguigu   4096  7月 21  2020 sbin
+drwxr-xr-x. 4 atguigu atguigu     31  7月 21  2020 share
+drwxrwxr-x. 2 atguigu atguigu     22  7月 31  2022 wcinput
+[atguigu@hadoop102 hadoop-3.1.4]$
+```
+
+到 103 上面砍 data
+
+```
+[atguigu@hadoop103 hadoop-3.1.4]$ rm -rf data
+```
+
+到 104 上面砍 data
+
+```
+[atguigu@hadoop104 hadoop-3.1.4]$ rm -rf data
+```
+
+訪問 `http://hadoop102:9870/explorer.html#/wcinput`
+點擊 `Download`
+
+嘗試全關了再重啟
+
+- 全關了
+
+```
+[atguigu@hadoop104 hadoop-3.1.4]$ sbin/stop-dfs.sh
+Stopping namenodes on [hadoop102]
+Stopping datanodes
+Stopping secondary namenodes [hadoop104]
+[atguigu@hadoop104 hadoop-3.1.4]$ sbin/stop-yarn.sh
+Stopping nodemanagers
+hadoop104: WARNING: nodemanager did not stop gracefully after 5 seconds: Trying to kill with kill -9
+Stopping resourcemanager
+[atguigu@hadoop104 hadoop-3.1.4]$
+```
+
+- 到 102 重啟 dfs
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+17866 Jps
+[atguigu@hadoop102 hadoop-3.1.4]$ sbin/start-dfs.sh
+Starting namenodes on [hadoop102]
+Starting datanodes
+Starting secondary namenodes [hadoop104]
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+18391 Jps
+18186 DataNode
+[atguigu@hadoop102 hadoop-3.1.4]$
+```
+
+發現 NameNode 掛了
+
+因為剛剛 data 中的 name 被砍了
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ ll data/dfs/
+總計 0
+drwx------. 2 atguigu atguigu 6  7月 27 21:01 data
+```
+
+嘗試格式化 hdfs
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hdfs namenode -format
+```
+
+訪問 `http://hadoop102:9870/`
+
+- 發現連不上了
+
+NameNode 也沒起來
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+18531 Jps
+18186 DataNode
+```
+
+### 正確處理方法
+
+只要`bin` `etc` 不要壞就好
+
+1. 先殺進程(process)
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ sbin/stop-dfs.sh
+Stopping namenodes on [hadoop102]
+Stopping datanodes
+Stopping secondary namenodes [hadoop104]
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+18988 Jps
+[atguigu@hadoop102 hadoop-3.1.4]$
+```
+
+2. 到每個集群上砍了 `data` `logs`
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ rm -rf data/ logs/
+[atguigu@hadoop103 hadoop-3.1.4]$ rm -rf data/ logs/
+[atguigu@hadoop104 hadoop-3.1.4]$ rm -rf data/ logs/
+```
+
+3. 砍完再格式化
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ hdfs namenode -format
+```
+
+會跳出一堆訊息, 就不貼了
+
+4. 啟動集群
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ sbin/start-dfs.sh
+Starting namenodes on [hadoop102]
+Starting datanodes
+hadoop104: WARNING: /opt/module/hadoop-3.1.4/logs does not exist. Creating.
+hadoop103: WARNING: /opt/module/hadoop-3.1.4/logs does not exist. Creating.
+Starting secondary namenodes [hadoop104]
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+19234 NameNode
+19387 DataNode
+19612 Jps
+```
+
+啟動 yarn
+
+```
+[atguigu@hadoop102 hadoop-3.1.4]$ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+[atguigu@hadoop102 hadoop-3.1.4]$ jps
+19234 NameNode
+20262 NodeManager
+19387 DataNode
+20398 Jps
+```
+
+5. 訪問 http://hadoop102:9870/explorer.html#/
