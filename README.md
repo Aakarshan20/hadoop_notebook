@@ -1688,3 +1688,177 @@ Starting nodemanagers
 ```
 [atguigu@hadoop102 hadoop-3.1.4]$ hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.4.jar wordcount /input /output2
 ```
+
+### 集群啟動/停止方式總結
+
+1. 各模塊分開啟動/停止
+
+- 整體啟動/停止 HDFS
+
+```
+start-dfs.sh/stop-dfs.sh
+```
+
+- 整體啟動/停止 YARN
+
+```
+start-yarn.sh/stop-yarn.sh
+```
+
+2. 各個服務組件逐一啟動/停止
+
+- 分別啟動/停止 HDFS ( namenode/datanode/secondarynamenode )
+
+```
+hdfs --daemon start/stop namenode/datanode/secondarynamenode
+```
+
+- 分別啟動/停止 YARN
+
+```
+yarn --daemon start/stop resourcemanager/nodemanager
+```
+
+### 編寫 hadoop 集群常用腳本
+
+1. hadoop 集群啟停腳本: ( 包含 HDFS,YARN, Historyserver ) myhadoop.sh
+
+```
+[atguigu@hadoop102 ~]$ cd /home/atguigu/bin
+[atguigu@hadoop102 bin]$ vim myhadoop.sh
+```
+
+```
+#!/bin/bash
+
+if [ $# -lt 1 ]
+then
+        echo "No Args Input..."
+        exit;
+fi
+
+case $1 in
+"start")
+        echo " ================ 啟動 hadoop 集群 ================"
+        echo " -------- 啟動 HDFS --------"
+        ssh hadoop103 "/opt/module/hadoop-3.1.4/sbin/start-dfs.sh"
+        echo " -------- 啟動 YARN --------"
+        ssh hadoop103 "/opt/module/hadoop-3.1.4/sbin/start-yarn.sh"
+        echo " -------- 啟動 historyserver --------"
+        ssh hadoop102 "/opt/module/hadoop-3.1.4/bin/mapred --daemon start historyserver"
+;;
+"stop")
+        echo " ================ 關閉 hadoop 集群 ================"
+        echo " -------- 關閉 historyserver --------"
+        ssh hadoop102 "/opt/module/hadoop-3.1.4/bin/mapred --daemon stop historyserver"
+        echo " -------- 關閉 YARN --------"
+        ssh hadoop103 "/opt/module/hadoop-3.1.4/sbin/stop-yarn.sh"
+        echo " -------- 關閉 HDFS --------"
+        ssh hadoop102 "/opt/module/hadoop-3.1.4/sbin/stop-dfs.sh"
+;;
+*)
+        echo "Input Args Error..."
+;;
+esac
+```
+
+```
+chmod 777 myhadoop.sh
+```
+
+- 使用方法
+
+1. 關閉
+
+```
+[atguigu@hadoop102 bin]$ myhadoop.sh stop
+```
+
+2. 開啟
+
+```
+[atguigu@hadoop102 bin]$ myhadoop.sh start
+```
+
+### 查看三台服務器的 java 進程腳本
+
+```
+[atguigu@hadoop102 bin]$ cd /home/atguigu/bin
+[atguigu@hadoop102 bin]$ vim jpsall
+```
+
+輸入以下內容
+
+```
+#!/bin/bash
+
+for host in hadoop102 hadoop103 hadoop104
+do
+        echo ======== $host ========
+        ssh $host jps
+done
+```
+
+查看全部
+
+```
+[atguigu@hadoop102 bin]$ jpsall
+======== hadoop102 ========
+3330 NameNode
+3957 Jps
+3755 JobHistoryServer
+3582 NodeManager
+3423 DataNode
+======== hadoop103 ========
+4465 ResourceManager
+4596 NodeManager
+4117 DataNode
+5061 Jps
+======== hadoop104 ========
+3088 SecondaryNameNode
+3185 NodeManager
+3445 Jps
+2973 DataNode
+```
+
+腳本分發
+
+```
+[atguigu@hadoop102 bin]$ xsync jpsall
+======= hadoop102 ========
+sending incremental file list
+
+sent 62 bytes  received 12 bytes  148.00 bytes/sec
+total size is 108  speedup is 1.46
+======= hadoop103 ========
+sending incremental file list
+jpsall
+
+sent 217 bytes  received 35 bytes  504.00 bytes/sec
+total size is 108  speedup is 0.43
+======= hadoop104 ========
+sending incremental file list
+jpsall
+
+sent 217 bytes  received 35 bytes  504.00 bytes/sec
+total size is 108  speedup is 0.43
+[atguigu@hadoop102 bin]$ xsync myhadoop.sh
+======= hadoop102 ========
+sending incremental file list
+
+sent 67 bytes  received 12 bytes  158.00 bytes/sec
+total size is 1,045  speedup is 13.23
+======= hadoop103 ========
+sending incremental file list
+myhadoop.sh
+
+sent 1,159 bytes  received 35 bytes  796.00 bytes/sec
+total size is 1,045  speedup is 0.88
+======= hadoop104 ========
+sending incremental file list
+myhadoop.sh
+
+sent 1,159 bytes  received 35 bytes  796.00 bytes/sec
+total size is 1,045  speedup is 0.88
+
+```
