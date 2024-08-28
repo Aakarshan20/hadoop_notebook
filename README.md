@@ -1003,7 +1003,6 @@ wcoutput/: 輸出目錄(不能事先創建!!)
 ## 錯誤排除
 
 如果啟動途中 發現這種訊息
-AJM6892
 
 ```
 [atguigu@hadoop103 hadoop-3.1.4]$ sbin/start-yarn.sh
@@ -1862,3 +1861,33 @@ sent 1,159 bytes  received 35 bytes  796.00 bytes/sec
 total size is 1,045  speedup is 0.88
 
 ```
+
+# 2024-08-28 更新
+
+## 錯誤排除
+
+如果發現無法啟動`NameNode`
+
+執行以下命令看 log ( 以 hadoop103 為例 )
+
+```
+[atguigu@hadoop103 logs]$ cd /opt/module/hadoop-3.1.4/logs
+[atguigu@hadoop103 logs]$ cat hadoop-atguigu-datanode-hadoop103.log
+```
+
+### 常用端口號說明
+
+| 端口名稱                            | hadoop2.x                        | hadoop3.x                                     |
+| ----------------------------------- | -------------------------------- | --------------------------------------------- |
+| NameNode 內部通信端口               | 8020 / 9000                      | <font color=#FF0000>8020</font> / 9000 / 9820 |
+| NameNode HTTP UI                    | <font color=#FF0000>50070</font> | <font color=#FF0000>9870</font>               |
+| MapReduce ( Yarn ) 查看執行任務端口 | 8088                             | 8088                                          |
+| 歷史服務器通信端口                  | 19888                            | 19888                                         |
+
+### 常用的配置文件
+
+hadoop3.x
+`core-site.xml` `hdfs-site.xml` `yarn-site.xml` `mapred-site.xml` ` works`
+
+hadoop2.x
+`core-site.xml` `hdfs-site.xml` `yarn-site.xml` `mapred-site.xml` ` slaves`
